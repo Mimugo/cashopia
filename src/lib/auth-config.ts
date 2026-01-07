@@ -13,6 +13,8 @@ initializeDatabase().catch((error) => {
   process.exit(1);
 });
 
+const baseURL = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+
 export const auth = betterAuth({
   database: getDatabase(),
   emailAndPassword: {
@@ -26,8 +28,10 @@ export const auth = betterAuth({
   secret:
     process.env.BETTER_AUTH_SECRET ||
     "change-this-to-a-secure-random-string-in-production",
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL,
 });
+
+console.log("Better auth url: ", baseURL);
 
 export type Session = typeof auth.$Infer.Session.session;
 export type User = typeof auth.$Infer.Session.user;
