@@ -3,9 +3,13 @@
 import { useEffect, useState } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { getUserHouseholdsAction, getHouseholdMembersAction, updateHouseholdSettings } from '@/app/actions/household';
-import { inviteUserToHousehold } from '@/app/actions/auth';
-import { Users, Mail, Plus, X, Settings } from 'lucide-react';
+import {
+  getUserHouseholdsAction,
+  getHouseholdMembersAction,
+  updateHouseholdSettings,
+} from "@/app/actions/household";
+import { inviteUserToHousehold } from "@/app/actions/auth";
+import { Users, Mail, Plus, X, Settings } from "lucide-react";
 
 export default function HouseholdPage() {
   const { data: session, isPending } = useSession();
@@ -14,11 +18,15 @@ export default function HouseholdPage() {
   const [members, setMembers] = useState<any[]>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteError, setInviteError] = useState('');
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteError, setInviteError] = useState("");
   const [inviteSuccess, setInviteSuccess] = useState(false);
-  const [settingsData, setSettingsData] = useState({ name: '', currency: '', budgetMonthStartDay: 1 });
-  const [settingsError, setSettingsError] = useState('');
+  const [settingsData, setSettingsData] = useState({
+    name: "",
+    currency: "",
+    budgetMonthStartDay: 1,
+  });
+  const [settingsError, setSettingsError] = useState("");
   const [settingsSaved, setSettingsSaved] = useState(false);
 
   useEffect(() => {
@@ -33,25 +41,36 @@ export default function HouseholdPage() {
     if (!session?.user?.id) return;
 
     const householdsResult = await getUserHouseholdsAction(session.user.id);
-    if (!householdsResult.success || householdsResult.households.length === 0) return;
+    if (
+      !householdsResult?.success ||
+      householdsResult?.households?.length === 0
+    )
+      return;
 
-    const currentHousehold = householdsResult.households[0];
+    const currentHousehold = householdsResult?.households?.[0] as any;
+    if (!currentHousehold) {
+      return {
+        name: "",
+        currency: "USD",
+        budgetMonthStartDay: 1,
+      };
+    }
     setHousehold(currentHousehold);
-    setSettingsData({ 
-      name: currentHousehold.name, 
-      currency: currentHousehold.currency || 'USD',
-      budgetMonthStartDay: currentHousehold.budget_month_start_day || 1
+    setSettingsData({
+      name: currentHousehold?.name ?? "",
+      currency: currentHousehold?.currency ?? "USD",
+      budgetMonthStartDay: currentHousehold?.budget_month_start_day ?? 1,
     });
 
     const membersResult = await getHouseholdMembersAction(currentHousehold.id);
     if (membersResult.success) {
-      setMembers(membersResult.members);
+      setMembers(membersResult?.members ?? []);
     }
   };
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    setInviteError('');
+    setInviteError("");
     setInviteSuccess(false);
 
     if (!household || !session?.user?.id) return;
@@ -66,7 +85,7 @@ export default function HouseholdPage() {
       setInviteError(result.error);
     } else {
       setInviteSuccess(true);
-      setInviteEmail('');
+      setInviteEmail("");
       setTimeout(() => {
         setShowInviteModal(false);
         setInviteSuccess(false);
@@ -77,7 +96,7 @@ export default function HouseholdPage() {
 
   const handleSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSettingsError('');
+    setSettingsError("");
     setSettingsSaved(false);
 
     if (!household || !session?.user?.id) return;
@@ -124,9 +143,12 @@ export default function HouseholdPage() {
           <div className="flex items-center">
             <Users className="w-8 h-8 text-blue-600 mr-3" />
             <div>
-              <h2 className="text-2xl font-semibold text-gray-900">{household.name}</h2>
+              <h2 className="text-2xl font-semibold text-gray-900">
+                {household.name}
+              </h2>
               <p className="text-sm text-gray-500">
-                Currency: {household.currency || 'USD'} • Created {new Date(household.created_at).toLocaleDateString()}
+                Currency: {household.currency || "USD"} • Created{" "}
+                {new Date(household.created_at).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -154,7 +176,10 @@ export default function HouseholdPage() {
         </div>
         <div className="divide-y divide-gray-200">
           {members.map((member) => (
-            <div key={member.id} className="px-6 py-4 flex items-center justify-between">
+            <div
+              key={member.id}
+              className="px-6 py-4 flex items-center justify-between"
+            >
               <div className="flex items-center">
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                   <span className="text-blue-600 font-semibold">
@@ -169,9 +194,9 @@ export default function HouseholdPage() {
               <div className="flex items-center space-x-3">
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    member.role === 'admin'
-                      ? 'bg-purple-100 text-purple-800'
-                      : 'bg-gray-100 text-gray-800'
+                    member.role === "admin"
+                      ? "bg-purple-100 text-purple-800"
+                      : "bg-gray-100 text-gray-800"
                   }`}
                 >
                   {member.role}
@@ -194,7 +219,7 @@ export default function HouseholdPage() {
               <button
                 onClick={() => {
                   setShowInviteModal(false);
-                  setInviteError('');
+                  setInviteError("");
                   setInviteSuccess(false);
                 }}
                 className="text-gray-500 hover:text-gray-700"
@@ -247,7 +272,7 @@ export default function HouseholdPage() {
                       type="button"
                       onClick={() => {
                         setShowInviteModal(false);
-                        setInviteError('');
+                        setInviteError("");
                       }}
                       className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300"
                     >
@@ -266,11 +291,13 @@ export default function HouseholdPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Household Settings</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Household Settings
+              </h2>
               <button
                 onClick={() => {
                   setShowSettingsModal(false);
-                  setSettingsError('');
+                  setSettingsError("");
                   setSettingsSaved(false);
                 }}
                 className="text-gray-500 hover:text-gray-700"
@@ -299,7 +326,12 @@ export default function HouseholdPage() {
                     <input
                       type="text"
                       value={settingsData.name}
-                      onChange={(e) => setSettingsData({ ...settingsData, name: e.target.value })}
+                      onChange={(e) =>
+                        setSettingsData({
+                          ...settingsData,
+                          name: e.target.value,
+                        })
+                      }
                       className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     />
@@ -311,7 +343,12 @@ export default function HouseholdPage() {
                     </label>
                     <select
                       value={settingsData.currency}
-                      onChange={(e) => setSettingsData({ ...settingsData, currency: e.target.value })}
+                      onChange={(e) =>
+                        setSettingsData({
+                          ...settingsData,
+                          currency: e.target.value,
+                        })
+                      }
                       className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="USD">USD - US Dollar ($)</option>
@@ -329,7 +366,8 @@ export default function HouseholdPage() {
                       <option value="BRL">BRL - Brazilian Real (R$)</option>
                     </select>
                     <p className="text-xs text-gray-500 mt-2">
-                      This will affect how amounts are displayed throughout the app.
+                      This will affect how amounts are displayed throughout the
+                      app.
                     </p>
                   </div>
 
@@ -339,17 +377,34 @@ export default function HouseholdPage() {
                     </label>
                     <select
                       value={settingsData.budgetMonthStartDay}
-                      onChange={(e) => setSettingsData({ ...settingsData, budgetMonthStartDay: parseInt(e.target.value) })}
+                      onChange={(e) =>
+                        setSettingsData({
+                          ...settingsData,
+                          budgetMonthStartDay: parseInt(e.target.value),
+                        })
+                      }
                       className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                        <option key={day} value={day}>
-                          {day}{day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : 'th'} of the month
-                        </option>
-                      ))}
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map(
+                        (day) => (
+                          <option key={day} value={day}>
+                            {day}
+                            {day === 1
+                              ? "st"
+                              : day === 2
+                              ? "nd"
+                              : day === 3
+                              ? "rd"
+                              : "th"}{" "}
+                            of the month
+                          </option>
+                        )
+                      )}
                     </select>
                     <p className="text-xs text-gray-500 mt-2">
-                      Set when your budget period starts (e.g., when you receive salary). Your budget tracking, charts, and statistics will align with this cycle.
+                      Set when your budget period starts (e.g., when you receive
+                      salary). Your budget tracking, charts, and statistics will
+                      align with this cycle.
                     </p>
                   </div>
 
@@ -364,7 +419,7 @@ export default function HouseholdPage() {
                       type="button"
                       onClick={() => {
                         setShowSettingsModal(false);
-                        setSettingsError('');
+                        setSettingsError("");
                       }}
                       className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300"
                     >
@@ -380,4 +435,3 @@ export default function HouseholdPage() {
     </div>
   );
 }
-

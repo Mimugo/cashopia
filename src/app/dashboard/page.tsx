@@ -342,7 +342,13 @@ export default function DashboardPage() {
                   cx="50%"
                   cy="50%"
                   outerRadius={100}
-                  label={(entry) => `${entry.name}: $${entry.total.toFixed(0)}`}
+                  label={(entry: any) =>
+                    `${entry.name}: $${
+                      entry.total?.toFixed
+                        ? entry.total.toFixed(0)
+                        : entry.total
+                    }`
+                  }
                 >
                   {spendingByCategory.map((entry: any, index: number) => (
                     <Cell

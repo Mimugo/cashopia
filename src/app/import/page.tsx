@@ -3,30 +3,41 @@
 import { useState, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { getUserHouseholdsAction } from '@/app/actions/household';
-import { detectCsvStructure, saveCsvMapping, getCsvMappings, importCsvTransactions } from '@/app/actions/csv-import';
-import { getAccounts } from '@/app/actions/accounts';
-import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { getUserHouseholdsAction } from "@/app/actions/household";
+import {
+  detectCsvStructure,
+  saveCsvMapping,
+  getCsvMappings,
+  importCsvTransactions,
+} from "@/app/actions/csv-import";
+import { getAccounts } from "@/app/actions/accounts";
+import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function ImportPage() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
   const [householdId, setHouseholdId] = useState<number | null>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
-  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
-  const [csvContent, setCsvContent] = useState('');
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(
+    null
+  );
+  const [csvContent, setCsvContent] = useState("");
   const [detectedStructure, setDetectedStructure] = useState<any>(null);
   const [mapping, setMapping] = useState({
-    name: '',
-    dateColumn: '',
-    descriptionColumn: '',
-    amountColumn: '',
-    typeColumn: '',
-    balanceColumn: '',
+    name: "",
+    dateColumn: "",
+    descriptionColumn: "",
+    amountColumn: "",
+    typeColumn: "",
+    balanceColumn: "",
   });
   const [savedMappings, setSavedMappings] = useState<any[]>([]);
-  const [selectedMappingId, setSelectedMappingId] = useState<number | null>(null);
-  const [step, setStep] = useState<'upload' | 'map' | 'confirm' | 'complete'>('upload');
+  const [selectedMappingId, setSelectedMappingId] = useState<number | null>(
+    null
+  );
+  const [step, setStep] = useState<"upload" | "map" | "confirm" | "complete">(
+    "upload"
+  );
   const [importResult, setImportResult] = useState<any>(null);
 
   useEffect(() => {
@@ -41,9 +52,10 @@ export default function ImportPage() {
     if (!session?.user?.id) return;
 
     const householdsResult = await getUserHouseholdsAction(session.user.id);
-    if (!householdsResult.success || householdsResult.households.length === 0) return;
+    if (!householdsResult.success || householdsResult.households?.length === 0)
+      return;
 
-    const houseId = householdsResult.households[0].id;
+    const houseId = (householdsResult.households?.[0] as any)?.id;
     setHouseholdId(houseId);
 
     const result = await getCsvMappings(houseId, session.user.id);
@@ -55,9 +67,11 @@ export default function ImportPage() {
     if (accountsResult.success) {
       setAccounts(accountsResult.accounts || []);
       // Auto-select first active account
-      const firstActive = accountsResult.accounts?.find((a: any) => a.is_active);
+      const firstActive = accountsResult.accounts?.find(
+        (a: any) => a.is_active
+      );
       if (firstActive) {
-        setSelectedAccountId(firstActive.id);
+        setSelectedAccountId((firstActive as any).id);
       }
     }
   };
@@ -71,26 +85,30 @@ export default function ImportPage() {
       const content = event.target?.result as string;
       setCsvContent(content);
 
-      const detection = await detectCsvStructure(content) as any;
+      const detection = (await detectCsvStructure(content)) as any;
       setDetectedStructure(detection);
-      
+
       // If a saved mapping is selected, use it; otherwise use detected values
       if (selectedMappingId === null) {
         setMapping({
-          name: file.name.replace('.csv', ''),
-          dateColumn: detection.suggestedMapping?.dateColumn || '',
-          descriptionColumn: detection.suggestedMapping?.descriptionColumn || '',
-          amountColumn: detection.suggestedMapping?.amountColumn || '',
-          typeColumn: detection.suggestedMapping?.typeColumn || '',
-          balanceColumn: detection.suggestedMapping?.balanceColumn || '',
+          name: file.name.replace(".csv", ""),
+          dateColumn: detection.suggestedMapping?.dateColumn || "",
+          descriptionColumn:
+            detection.suggestedMapping?.descriptionColumn || "",
+          amountColumn: detection.suggestedMapping?.amountColumn || "",
+          typeColumn: detection.suggestedMapping?.typeColumn || "",
+          balanceColumn: detection.suggestedMapping?.balanceColumn || "",
         });
       }
       // If mapping already selected, keep it but update the name
       else {
-        setMapping(prev => ({ ...prev, name: prev.name || file.name.replace('.csv', '') }));
+        setMapping((prev) => ({
+          ...prev,
+          name: prev.name || file.name.replace(".csv", ""),
+        }));
       }
-      
-      setStep('map');
+
+      setStep("map");
     };
     reader.readAsText(file);
   };
@@ -102,20 +120,20 @@ export default function ImportPage() {
       dateColumn: savedMapping.date_column,
       descriptionColumn: savedMapping.description_column,
       amountColumn: savedMapping.amount_column,
-      typeColumn: savedMapping.type_column || '',
-      balanceColumn: savedMapping.balance_column || '',
+      typeColumn: savedMapping.type_column || "",
+      balanceColumn: savedMapping.balance_column || "",
     });
   };
 
   const handleUseNewMapping = () => {
     setSelectedMappingId(null);
     setMapping({
-      name: '',
-      dateColumn: '',
-      descriptionColumn: '',
-      amountColumn: '',
-      typeColumn: '',
-      balanceColumn: '',
+      name: "",
+      dateColumn: "",
+      descriptionColumn: "",
+      amountColumn: "",
+      typeColumn: "",
+      balanceColumn: "",
     });
   };
 
@@ -124,23 +142,23 @@ export default function ImportPage() {
 
     // Save mapping
     await saveCsvMapping(householdId, session.user.id, mapping);
-    
-    setStep('confirm');
+
+    setStep("confirm");
   };
 
   const handleImport = async () => {
     if (!householdId || !session?.user?.id) return;
 
-    const result = await importCsvTransactions(
+    const result = (await importCsvTransactions(
       householdId,
       session.user.id,
       csvContent,
       mapping,
       selectedAccountId || undefined
-    ) as any;
+    )) as any;
 
     setImportResult(result);
-    setStep('complete');
+    setStep("complete");
   };
 
   if (isPending) {
@@ -153,9 +171,13 @@ export default function ImportPage() {
 
       {/* Progress Steps */}
       <div className="flex items-center justify-between">
-        {['Upload', 'Map', 'Confirm', 'Complete'].map((stepName, index) => {
-          const stepIndex = ['upload', 'map', 'confirm', 'complete'].indexOf(step);
-          const currentIndex = ['upload', 'map', 'confirm', 'complete'].indexOf(stepName.toLowerCase());
+        {["Upload", "Map", "Confirm", "Complete"].map((stepName, index) => {
+          const stepIndex = ["upload", "map", "confirm", "complete"].indexOf(
+            step
+          );
+          const currentIndex = ["upload", "map", "confirm", "complete"].indexOf(
+            stepName.toLowerCase()
+          );
           const isActive = currentIndex === stepIndex;
           const isComplete = currentIndex < stepIndex;
 
@@ -165,10 +187,10 @@ export default function ImportPage() {
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     isComplete
-                      ? 'bg-green-500 text-white'
+                      ? "bg-green-500 text-white"
                       : isActive
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-300 text-gray-600'
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-300 text-gray-600"
                   }`}
                 >
                   {isComplete ? <CheckCircle className="w-6 h-6" /> : index + 1}
@@ -178,7 +200,11 @@ export default function ImportPage() {
                 </span>
               </div>
               {index < 3 && (
-                <div className={`flex-1 h-1 mx-2 ${isComplete ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <div
+                  className={`flex-1 h-1 mx-2 ${
+                    isComplete ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                />
               )}
             </div>
           );
@@ -186,7 +212,7 @@ export default function ImportPage() {
       </div>
 
       {/* Step 1: Upload */}
-      {step === 'upload' && (
+      {step === "upload" && (
         <div className="space-y-6">
           {/* Select Mapping First */}
           {savedMappings.length > 0 && (
@@ -197,20 +223,22 @@ export default function ImportPage() {
               <p className="text-gray-600 mb-4">
                 Choose a saved mapping to use, or create a new one
               </p>
-              
+
               <div className="space-y-2 mb-4">
                 <button
                   onClick={handleUseNewMapping}
                   className={`w-full text-left px-4 py-3 rounded-lg border-2 ${
                     selectedMappingId === null
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:bg-gray-50'
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center">
                     <Upload className="w-5 h-5 text-gray-400 mr-3" />
                     <div>
-                      <div className="font-medium text-gray-900">New Mapping</div>
+                      <div className="font-medium text-gray-900">
+                        New Mapping
+                      </div>
                       <div className="text-sm text-gray-500">
                         Auto-detect columns from your CSV
                       </div>
@@ -224,20 +252,27 @@ export default function ImportPage() {
                     onClick={() => handleSelectMapping(savedMapping)}
                     className={`w-full text-left px-4 py-3 rounded-lg border-2 ${
                       selectedMappingId === savedMapping.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:bg-gray-50'
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:bg-gray-50"
                     }`}
                   >
                     <div className="flex items-center">
                       <FileText className="w-5 h-5 text-gray-400 mr-3" />
                       <div className="flex-1">
-                        <div className="font-medium text-gray-900">{savedMapping.name}</div>
+                        <div className="font-medium text-gray-900">
+                          {savedMapping.name}
+                        </div>
                         <div className="text-sm text-gray-500">
-                          Date: {savedMapping.date_column}, Amount: {savedMapping.amount_column}
-                          {savedMapping.balance_column && `, Balance: ${savedMapping.balance_column}`}
+                          Date: {savedMapping.date_column}, Amount:{" "}
+                          {savedMapping.amount_column}
+                          {savedMapping.balance_column &&
+                            `, Balance: ${savedMapping.balance_column}`}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
-                          Created {new Date(savedMapping.created_at).toLocaleDateString()}
+                          Created{" "}
+                          {new Date(
+                            savedMapping.created_at
+                          ).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
@@ -253,7 +288,8 @@ export default function ImportPage() {
               Upload CSV File
               {selectedMappingId && (
                 <span className="ml-2 text-sm font-normal text-blue-600">
-                  (Using: {savedMappings.find(m => m.id === selectedMappingId)?.name})
+                  (Using:{" "}
+                  {savedMappings.find((m) => m.id === selectedMappingId)?.name})
                 </span>
               )}
             </h2>
@@ -279,29 +315,39 @@ export default function ImportPage() {
       )}
 
       {/* Step 2: Map Columns */}
-      {step === 'map' && detectedStructure && (
+      {step === "map" && detectedStructure && (
         <div className="bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Map CSV Columns</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Map CSV Columns
+          </h2>
           <p className="text-gray-600 mb-4">
             Review and adjust the column mappings detected from your CSV file.
           </p>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Mapping Name</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Mapping Name
+              </label>
               <input
                 type="text"
                 value={mapping.name}
-                onChange={(e) => setMapping({ ...mapping, name: e.target.value })}
+                onChange={(e) =>
+                  setMapping({ ...mapping, name: e.target.value })
+                }
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Date Column</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Date Column
+              </label>
               <select
                 value={mapping.dateColumn}
-                onChange={(e) => setMapping({ ...mapping, dateColumn: e.target.value })}
+                onChange={(e) =>
+                  setMapping({ ...mapping, dateColumn: e.target.value })
+                }
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="">Select column</option>
@@ -314,10 +360,14 @@ export default function ImportPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Description Column</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Description Column
+              </label>
               <select
                 value={mapping.descriptionColumn}
-                onChange={(e) => setMapping({ ...mapping, descriptionColumn: e.target.value })}
+                onChange={(e) =>
+                  setMapping({ ...mapping, descriptionColumn: e.target.value })
+                }
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="">Select column</option>
@@ -330,10 +380,14 @@ export default function ImportPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Amount Column</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Amount Column
+              </label>
               <select
                 value={mapping.amountColumn}
-                onChange={(e) => setMapping({ ...mapping, amountColumn: e.target.value })}
+                onChange={(e) =>
+                  setMapping({ ...mapping, amountColumn: e.target.value })
+                }
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="">Select column</option>
@@ -346,10 +400,14 @@ export default function ImportPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Type Column (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Type Column (Optional)
+              </label>
               <select
                 value={mapping.typeColumn}
-                onChange={(e) => setMapping({ ...mapping, typeColumn: e.target.value })}
+                onChange={(e) =>
+                  setMapping({ ...mapping, typeColumn: e.target.value })
+                }
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="">None</option>
@@ -362,10 +420,14 @@ export default function ImportPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Balance Column (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Balance Column (Optional)
+              </label>
               <select
                 value={mapping.balanceColumn}
-                onChange={(e) => setMapping({ ...mapping, balanceColumn: e.target.value })}
+                onChange={(e) =>
+                  setMapping({ ...mapping, balanceColumn: e.target.value })
+                }
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="">None</option>
@@ -381,18 +443,27 @@ export default function ImportPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Import to Account (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Import to Account (Optional)
+              </label>
               <select
-                value={selectedAccountId || ''}
-                onChange={(e) => setSelectedAccountId(e.target.value ? parseInt(e.target.value) : null)}
+                value={selectedAccountId || ""}
+                onChange={(e) =>
+                  setSelectedAccountId(
+                    e.target.value ? parseInt(e.target.value) : null
+                  )
+                }
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="">No specific account</option>
-                {accounts.filter(a => a.is_active).map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name} - {account.institution || account.account_type}
-                  </option>
-                ))}
+                {accounts
+                  .filter((a) => a.is_active)
+                  .map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name} -{" "}
+                      {account.institution || account.account_type}
+                    </option>
+                  ))}
               </select>
               <p className="mt-1 text-sm text-gray-500">
                 Link these transactions to a specific bank account
@@ -418,15 +489,20 @@ export default function ImportPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {detectedStructure.samples.slice(0, 3).map((row: any, idx: number) => (
-                    <tr key={idx}>
-                      {detectedStructure.headers.map((header: string) => (
-                        <td key={header} className="px-4 py-2 text-sm text-gray-900">
-                          {row[header]}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                  {detectedStructure.samples
+                    .slice(0, 3)
+                    .map((row: any, idx: number) => (
+                      <tr key={idx}>
+                        {detectedStructure.headers.map((header: string) => (
+                          <td
+                            key={header}
+                            className="px-4 py-2 text-sm text-gray-900"
+                          >
+                            {row[header]}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
                 </tbody>
               </table>
             </div>
@@ -434,14 +510,18 @@ export default function ImportPage() {
 
           <div className="flex space-x-3 mt-6">
             <button
-              onClick={() => setStep('upload')}
+              onClick={() => setStep("upload")}
               className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300"
             >
               Back
             </button>
             <button
               onClick={handleConfirmMapping}
-              disabled={!mapping.dateColumn || !mapping.descriptionColumn || !mapping.amountColumn}
+              disabled={
+                !mapping.dateColumn ||
+                !mapping.descriptionColumn ||
+                !mapping.amountColumn
+              }
               className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Continue
@@ -451,15 +531,19 @@ export default function ImportPage() {
       )}
 
       {/* Step 3: Confirm */}
-      {step === 'confirm' && (
+      {step === "confirm" && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Confirm Import</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Confirm Import
+          </h2>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <div className="flex items-start">
               <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 mr-3" />
               <div>
                 <p className="text-sm text-blue-800">
-                  You're about to import transactions from your CSV file. The system will automatically categorize transactions based on their descriptions.
+                  You're about to import transactions from your CSV file. The
+                  system will automatically categorize transactions based on
+                  their descriptions.
                 </p>
               </div>
             </div>
@@ -468,27 +552,35 @@ export default function ImportPage() {
           <div className="space-y-2 mb-6">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Date Column:</span>
-              <span className="font-medium text-gray-900">{mapping.dateColumn}</span>
+              <span className="font-medium text-gray-900">
+                {mapping.dateColumn}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Description Column:</span>
-              <span className="font-medium text-gray-900">{mapping.descriptionColumn}</span>
+              <span className="font-medium text-gray-900">
+                {mapping.descriptionColumn}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Amount Column:</span>
-              <span className="font-medium text-gray-900">{mapping.amountColumn}</span>
+              <span className="font-medium text-gray-900">
+                {mapping.amountColumn}
+              </span>
             </div>
             {mapping.typeColumn && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Type Column:</span>
-                <span className="font-medium text-gray-900">{mapping.typeColumn}</span>
+                <span className="font-medium text-gray-900">
+                  {mapping.typeColumn}
+                </span>
               </div>
             )}
           </div>
 
           <div className="flex space-x-3">
             <button
-              onClick={() => setStep('map')}
+              onClick={() => setStep("map")}
               className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300"
             >
               Back
@@ -504,7 +596,7 @@ export default function ImportPage() {
       )}
 
       {/* Step 4: Complete */}
-      {step === 'complete' && importResult && (
+      {step === "complete" && importResult && (
         <div className="bg-white rounded-lg shadow p-6 text-center">
           {importResult.success ? (
             <>
@@ -517,7 +609,7 @@ export default function ImportPage() {
                 {importResult.failed > 0 && ` ${importResult.failed} failed.`}
               </p>
               <button
-                onClick={() => router.push('/transactions')}
+                onClick={() => router.push("/transactions")}
                 className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700"
               >
                 View Transactions
@@ -531,7 +623,7 @@ export default function ImportPage() {
               </h2>
               <p className="text-gray-600 mb-6">{importResult.error}</p>
               <button
-                onClick={() => setStep('upload')}
+                onClick={() => setStep("upload")}
                 className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700"
               >
                 Try Again
@@ -543,4 +635,3 @@ export default function ImportPage() {
     </div>
   );
 }
-
