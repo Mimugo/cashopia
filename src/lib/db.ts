@@ -1,21 +1,15 @@
+import { getDatabase } from './db-migrations';
 import Database from 'better-sqlite3';
-import path from 'path';
 
 // This file should ONLY be imported on the server side
 if (typeof window !== 'undefined') {
   throw new Error('db.ts should not be imported on the client side');
 }
 
-const dbPath = process.env.DATABASE_URL || path.join(process.cwd(), 'data/cashopia.db');
-
-let db: Database.Database | null = null;
-
+// Use the database from migrations system
+// Migrations are run automatically on app startup via middleware
 export function getDb(): Database.Database {
-  if (!db) {
-    db = new Database(dbPath);
-    db.pragma('foreign_keys = ON');
-  }
-  return db;
+  return getDatabase();
 }
 
 export interface User {

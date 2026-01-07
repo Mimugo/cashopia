@@ -44,10 +44,10 @@ The application comes with sensible defaults for Docker. For production, update 
 - `BETTER_AUTH_URL` - Set to your production URL
 - `NEXT_PUBLIC_BETTER_AUTH_URL` - Set to your production URL (must be publicly accessible)
 
-### 3. Build and Start the Application
+### 3. Start the Application
 
 ```bash
-# Build and start the containers
+# Build and start (database auto-initializes on first run)
 docker-compose up --build
 
 # Or run in detached mode
@@ -158,14 +158,13 @@ If you want to run the application in development mode (without Docker):
 # Install dependencies
 npm install
 
-# Initialize the database
-npm run db:init
-
-# Start development server
+# Start development server (database auto-initializes)
 npm run dev
 ```
 
 The application will be available at `http://localhost:3000`
+
+**Note**: The database automatically initializes on first run. No manual setup required!
 
 ### Project Structure
 

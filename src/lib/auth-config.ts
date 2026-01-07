@@ -1,16 +1,20 @@
 import { betterAuth } from "better-auth";
-import Database from "better-sqlite3";
-import path from "path";
+import { getDatabase, initializeDatabase } from "./db-migrations";
 
 // This file should ONLY be imported on the server side
 if (typeof window !== 'undefined') {
   throw new Error('auth-config.ts should not be imported on the client side');
 }
 
-const dbPath = process.env.DATABASE_URL || path.join(process.cwd(), "data/cashopia.db");
+// Initialize database (runs migrations if needed)
+// This runs synchronously during module load
+initializeDatabase().catch(error => {
+  console.error('Failed to initialize database:', error);
+  process.exit(1);
+});
 
 export const auth = betterAuth({
-  database: new Database(dbPath),
+  database: getDatabase(),
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,

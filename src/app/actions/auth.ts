@@ -35,7 +35,8 @@ export async function inviteUserToHousehold(
 ) {
   const db = getDb();
 
-  const user = getUserByEmail(email);
+  // Find user by email
+  const user = db.prepare("SELECT id FROM user WHERE email = ?").get(email) as { id: string } | undefined;
   if (!user) {
     return { error: "User not found" };
   }
