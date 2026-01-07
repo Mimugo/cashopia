@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./data:/app/data
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=/app/data/cashopia.db
+      - BETTER_AUTH_SECRET=change-this-to-a-secure-random-string-in-production
+      - BETTER_AUTH_URL=http://localhost:3000
+      - NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
+    depends_on:
+      - db-init
+    command: npm run start
+
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=/app/data/cashopia.db
+    command: npm run db:init
+
+volumes:
+  data:
+
